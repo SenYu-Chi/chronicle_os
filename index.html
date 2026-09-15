@@ -1,1 +1,627 @@
-LOADING_FROM_LOCAL
+<!DOCTYPE html>
+<html lang="zh-TW" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chronicle OS v1.5 - Retro Terminal Journal & AI (Perf Optimized)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Line Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Monospace Font: JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Modular Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'term-bg': '#EDEAE3',
+                        'term-frame': '#1F2430',
+                        'term-text': '#2B2B2B',
+                        'term-muted': '#8A8A85',
+                        'term-border': '#3D3D3A',
+                        'term-accent': '#2C5E3B',
+                        'term-warn': '#B91C1C',
+                    },
+                    fontFamily: {
+                        mono: ['JetBrains Mono', 'Consolas', 'Courier New', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="h-screen w-screen overflow-hidden p-2 sm:p-4 select-none">
+
+    <!-- Main Shell Frame Container -->
+    <div id="app" class="h-full w-full border-2 border-term-frame bg-term-bg flex flex-col terminal-box-shadow relative overflow-hidden">
+        
+        <!-- Top Status Bar (Retro Terminal OS Header) -->
+        <header class="h-9 border-b-2 border-term-frame bg-term-bg flex items-center justify-between px-3 text-xs shrink-0 select-none">
+            <div class="flex items-center space-x-3">
+                <span class="font-bold tracking-wider text-term-frame uppercase flex items-center gap-1.5">
+                    <i class="fa-solid fa-terminal text-[10px]"></i>
+                    CHRONICLE_OS//v1.5_PERF_OPTIMIZED
+                </span>
+                <span class="hidden sm:inline text-term-muted">|</span>
+                <span class="hidden sm:inline text-term-muted font-mono" id="currentDirectoryPath">/home/user/diary</span>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <span id="fileSyncBadge" class="hidden sm:inline-flex items-center text-[10px] border border-term-frame px-1.5 py-0.5 bg-term-bg cursor-pointer hover:bg-term-frame hover:text-term-bg transition-colors" onclick="openFileOpsModal()">
+                    <i class="fa-solid fa-hard-drive mr-1"></i> FS: <span id="fileSyncStatus" class="font-bold ml-1">LOCAL</span>
+                </span>
+                <span id="aiStatusBadge" class="hidden sm:inline-flex items-center text-[10px] border border-term-frame px-1.5 py-0.5 bg-term-bg cursor-pointer hover:bg-term-frame hover:text-term-bg transition-colors" onclick="openAiConfigModal()">
+                    <i class="fa-solid fa-brain mr-1"></i> AI: <span id="aiStatusText" class="font-bold ml-1 text-emerald-800">READY</span>
+                </span>
+                <span id="systemClock" class="font-mono text-term-text font-medium">2026-09-15 22:30:00</span>
+            </div>
+        </header>
+
+        <!-- Main Workspace Grid -->
+        <div class="flex-1 flex overflow-hidden relative">
+            
+            <!-- Mobile Sidebar Backdrop Overlay -->
+            <div id="sidebarOverlay" class="fixed inset-0 bg-term-frame/40 z-20 hidden md:hidden backdrop-blur-sm gpu-layer" onclick="toggleSidebar()"></div>
+
+            <!-- Left Navigation Sidebar -->
+            <aside id="sidebar" class="absolute md:relative inset-y-0 left-0 z-30 w-72 border-r-2 border-term-frame bg-term-bg flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out shrink-0 gpu-layer">
+                
+                <!-- Sidebar Header -->
+                <div class="p-3 border-b-2 border-term-frame flex items-center justify-between">
+                    <span class="text-xs font-bold text-term-frame uppercase tracking-wider">
+                        > navigation/
+                    </span>
+                    <button onclick="toggleSidebar()" class="md:hidden p-1 text-term-frame hover:bg-term-frame hover:text-term-bg">
+                        <i class="fa-solid fa-xmark text-sm"></i>
+                    </button>
+                </div>
+
+                <!-- Action Controls Section -->
+                <div class="p-3 border-b border-term-border space-y-2">
+                    <button onclick="createNewThread()" class="btn-terminal w-full justify-center">
+                        <i class="fa-solid fa-plus text-xs"></i>
+                        <span>> new_thread</span>
+                    </button>
+                    
+                    <div class="grid grid-cols-2 gap-1.5 pt-1">
+                        <button onclick="openTimeMachineModal()" class="btn-terminal text-[11px] justify-center text-amber-900 border-amber-900">
+                            <i class="fa-solid fa-clock-rotate-left text-[10px]"></i>
+                            <span>[這天你在想什麼]</span>
+                        </button>
+                        <button onclick="openStatsModal()" class="btn-terminal text-[11px] justify-center">
+                            <i class="fa-solid fa-chart-line text-[10px]"></i>
+                            <span>[週/月報洞察]</span>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-1.5">
+                        <button onclick="openFileOpsModal()" class="btn-terminal text-[11px] justify-center">
+                            <i class="fa-solid fa-floppy-disk text-[10px]"></i>
+                            <span>[file_api]</span>
+                        </button>
+                        <button onclick="openAiConfigModal()" class="btn-terminal text-[11px] justify-center">
+                            <i class="fa-solid fa-gear text-[10px]"></i>
+                            <span>[ai_config]</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CLI Search Input -->
+                <div class="p-3 border-b border-term-border space-y-2">
+                    <div class="relative flex items-center">
+                        <span class="absolute left-2.5 text-xs text-term-muted font-bold">>></span>
+                        <input type="text" id="searchInput" oninput="debouncedHandleSearch(this.value)" placeholder="search_logs_or_tags..." class="input-terminal w-full pl-8 pr-2 py-1 text-xs placeholder:text-term-muted" />
+                    </div>
+
+                    <!-- Dynamic Tag Category Filter Bar -->
+                    <div id="tagFilterBar" class="flex items-center gap-1 overflow-x-auto pb-1 text-[10px]">
+                        <!-- Rendered via JS Fragment -->
+                    </div>
+                </div>
+
+                <!-- Threads Directory List -->
+                <div class="p-2 border-b border-term-border bg-term-bg/50 flex items-center justify-between">
+                    <span class="text-[10px] text-term-muted uppercase tracking-widest font-bold">// active_threads</span>
+                    <span class="text-[10px] text-term-muted" id="fileHandleState">[local]</span>
+                </div>
+                
+                <div id="threadsList" class="flex-1 overflow-y-auto p-2 space-y-1">
+                    <!-- Dynamic Thread List populated via JS DocumentFragment -->
+                </div>
+
+                <!-- Sidebar Footer Status -->
+                <div class="p-2.5 border-t-2 border-term-frame bg-term-bg flex items-center justify-between text-[11px] text-term-muted">
+                    <span id="threadCountBadge">0 threads</span>
+                    <span class="text-[10px] uppercase font-bold">[utf-8]</span>
+                </div>
+            </aside>
+
+            <!-- Main Terminal Workspace -->
+            <main class="flex-1 flex flex-col overflow-hidden bg-term-bg min-w-0 relative">
+                
+                <!-- Workspace Top Navigation Header -->
+                <header class="h-12 border-b-2 border-term-frame px-2 sm:px-4 flex items-center justify-between shrink-0 bg-term-bg min-w-0 gap-2 z-10">
+                    <div class="flex items-center space-x-2 sm:space-x-3 overflow-hidden min-w-0 flex-1">
+                        <button onclick="toggleSidebar()" class="md:hidden btn-terminal p-1.5 shrink-0">
+                            <i class="fa-solid fa-bars text-xs"></i>
+                        </button>
+                        
+                        <div class="flex items-center space-x-1.5 overflow-hidden min-w-0 flex-1">
+                            <span class="text-xs text-term-muted font-bold shrink-0">></span>
+                            <input type="text" id="threadTitleInput" oninput="updateThreadTitle(this.value)" placeholder="untitled_log" class="font-bold text-sm sm:text-base bg-transparent border-b border-transparent hover:border-term-border focus:border-term-frame focus:outline-none text-term-text truncate py-0.5 min-w-0 flex-1" />
+                            <span class="text-sm font-bold text-term-frame animate-cursor shrink-0 mr-2">_</span>
+                            <!-- Thread Level AI Topic Tags Badge Container -->
+                            <div id="threadHeaderTags" class="hidden sm:flex items-center gap-1 shrink-0"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
+                        <button onclick="generateAiSummary()" id="aiSummaryBtn" class="hidden btn-terminal text-emerald-900 border-emerald-800 hover:bg-emerald-900 hover:text-term-bg text-xs">
+                            <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
+                            <span class="hidden sm:inline">AI_Summarize</span>
+                        </button>
+                        <button onclick="toggleAiChatDrawer()" id="aiChatDrawerBtn" class="hidden btn-terminal text-indigo-900 border-indigo-800 hover:bg-indigo-900 hover:text-term-bg text-xs">
+                            <i class="fa-solid fa-comments text-xs"></i>
+                            <span class="hidden md:inline">AI_Chat_Review</span>
+                        </button>
+                        <button onclick="confirmDeleteThread()" id="deleteBtn" class="hidden btn-terminal text-rose-700 border-rose-800 hover:bg-rose-900 hover:text-term-bg text-xs">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                            <span class="hidden lg:inline">delete_thread</span>
+                        </button>
+                    </div>
+                </header>
+
+                <!-- Workspace Content Area -->
+                <div class="flex-1 flex overflow-hidden relative min-w-0">
+                    
+                    <!-- Terminal Journal Log Stream Container -->
+                    <div id="chatContainer" class="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4 min-w-0">
+                        
+                        <!-- Empty State View -->
+                        <div id="emptyState" class="h-full flex flex-col items-center justify-center text-center p-6 space-y-4">
+                            <div class="p-4 border-2 border-term-frame bg-term-bg terminal-box-shadow max-w-lg w-full text-left space-y-3">
+                                <div class="border-b border-term-frame pb-2 flex items-center justify-between">
+                                    <span class="font-bold text-xs uppercase text-term-frame">// SYSTEM_INIT_WELCOME v1.5</span>
+                                    <span class="text-[10px] text-term-muted">[PERF_OPTIMIZED]</span>
+                                </div>
+                                <h2 class="text-base font-bold text-term-text">> CHRONICLE_OS v1.5: HIGH-PERFORMANCE ENGINE</h2>
+                                <p class="text-xs text-term-text leading-relaxed">
+                                    全面優化 UI/UX 效能！包含 **DOM DocumentFragment 批次渲染**、**防抖 (Debounced) 搜尋與儲存**、**DOM Selector 快取** 與 **GPU 獨立圖層加速**！
+                                </p>
+                                <div class="text-[11px] text-term-muted space-y-1 font-mono border-t border-dashed border-term-border pt-2">
+                                    <p>🚀 **DocumentFragment**: 減少 DOM 重繪 (Reflow/Repaint)，大幅提升大量條目開啟速度。</p>
+                                    <p>⚡ **Input Debouncing**: 搜尋與輸入過程不再觸發過度計算，畫面極致順暢。</p>
+                                    <p>🎯 **GPU Acceleration**: 側邊欄與 Modal 動畫使用 GPU 獨立圖層呈現 60fps 流暢感。</p>
+                                </div>
+                                <div class="flex justify-end pt-2">
+                                    <button onclick="createNewThread()" class="btn-terminal">
+                                        <span>> execute_new_thread</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Active Sentence Stream -->
+                        <div id="activeChatStream" class="hidden space-y-3 max-w-4xl mx-auto pb-4 min-w-0">
+                            <!-- Sentences logged here dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Slide-over AI Terminal Assistant Drawer -->
+                    <div id="aiChatDrawer" class="absolute top-0 right-0 bottom-0 w-full sm:w-96 bg-term-bg border-l-2 border-term-frame flex flex-col hidden shrink-0 shadow-2xl z-30 min-w-0 gpu-layer">
+                        <div class="p-2 border-b-2 border-term-frame flex items-center justify-between bg-term-bg shrink-0">
+                            <div class="flex items-center space-x-1">
+                                <button id="aiModeCurrentBtn" onclick="setAiChatScope('current')" class="btn-terminal text-[10px] btn-terminal-active">
+                                    單篇日誌
+                                </button>
+                                <button id="aiModeGlobalBtn" onclick="setAiChatScope('global')" class="btn-terminal text-[10px]">
+                                    全庫回顧
+                                </button>
+                            </div>
+                            <button onclick="toggleAiChatDrawer()" class="text-xs border border-term-frame px-1.5 py-0.5 hover:bg-term-frame hover:text-term-bg font-bold">
+                                [X]
+                            </button>
+                        </div>
+                        
+                        <!-- AI Chat Message Log (Markdown Rendered) -->
+                        <div id="aiChatMessages" class="flex-1 overflow-y-auto p-3 space-y-3 text-xs font-mono min-w-0 break-words">
+                            <div class="p-2 border border-term-frame bg-term-bg/50 min-w-0 break-words">
+                                <span class="text-[10px] text-term-muted block font-bold">// AI_RETROSPECTIVE_AGENT</span>
+                                <p class="mt-1 leading-relaxed text-term-text break-words">你好！我是終端日記 AI 助手。已升級至 v1.5 高效能架構，結合 **JSON 結構化語意分析** 與 **滾動脈絡快取 (Rolling Context)**，響應更加迅速！</p>
+                            </div>
+                        </div>
+
+                        <!-- AI Quick Action Buttons -->
+                        <div class="p-2 border-t border-term-border flex flex-wrap gap-1 bg-term-bg/80 shrink-0">
+                            <button onclick="quickAiQuery('我最近重點記錄了哪些事情？')" class="tag-terminal text-[10px] max-w-full truncate">[重點回顧]</button>
+                            <button onclick="quickAiQuery('我近期常抱怨或煩惱什麼問題？')" class="tag-terminal text-[10px] max-w-full truncate">[近況煩惱]</button>
+                            <button onclick="quickAiQuery('幫我做近期的健康與睡眠狀況總結')" class="tag-terminal text-[10px] max-w-full truncate">[健康總結]</button>
+                            <button onclick="quickAiQuery('發現我近期寫日記的盲點與自我反思建議')" class="tag-terminal text-[10px] max-w-full truncate">[盲點洞察]</button>
+                        </div>
+
+                        <!-- AI Chat Input Bar -->
+                        <form onsubmit="handleAiChatSubmit(event)" class="p-2 border-t-2 border-term-frame flex items-center gap-1.5 bg-term-bg shrink-0">
+                            <input type="text" id="aiChatInput" onkeydown="handleAiChatKey(event)" placeholder="詢問 AI 關於日記或歷史分析..." class="input-terminal flex-1 text-xs py-1.5 min-w-0" />
+                            <button type="submit" id="aiChatSendBtn" class="btn-terminal py-1.5 px-2 shrink-0">
+                                <i class="fa-solid fa-paper-plane text-xs"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Bottom CLI Input Console Area -->
+                <div id="chatInputArea" class="hidden border-t-2 border-term-frame p-2 sm:p-3 bg-term-bg shrink-0 min-w-0">
+                    <div class="max-w-4xl mx-auto space-y-2 min-w-0">
+                        <div class="flex items-center justify-between border-b border-term-border pb-2 min-w-0">
+                            <div class="flex items-center space-x-1.5 text-[11px] font-bold text-term-muted uppercase">
+                                <span>// ENTRY_CONSOLE</span>
+                            </div>
+                        </div>
+
+                        <form onsubmit="handleSendMessage(event)" class="flex items-end gap-2 pt-1 min-w-0">
+                            <div class="flex-1 flex items-start border-2 border-term-frame bg-term-bg p-2 focus-within:ring-1 focus-within:ring-term-frame min-w-0">
+                                <span class="text-sm font-bold text-term-frame mr-2 select-none font-mono py-0.5 shrink-0">>></span>
+                                <textarea id="messageInput" rows="2" onkeydown="handleKeySubmit(event)" placeholder="輸入日誌條目... (Enter 傳送, Shift+Enter 換行)" class="w-full bg-transparent border-none focus:outline-none text-term-text text-xs sm:text-sm resize-none placeholder:text-term-muted font-mono leading-relaxed min-w-0"></textarea>
+                            </div>
+                            <button type="submit" class="btn-terminal h-[52px] px-4 font-bold border-2 justify-center shrink-0">
+                                <span>> EXECUTE</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Bottom System Status Footer Bar -->
+        <footer class="h-6 border-t-2 border-term-frame bg-term-bg px-3 flex items-center justify-between text-[10px] text-term-muted select-none shrink-0">
+            <div class="flex items-center space-x-4">
+                <span>MEM: 640K OK</span>
+                <span id="fileApiStatusText">FS_ACCESS_API: DETECTED</span>
+            </div>
+            <div>
+                <span>CHRONICLE_OS v1.5 // HIGH-PERFORMANCE DOM & AI</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Time Machine / "On This Day" Modal -->
+    <div id="timeMachineModal" class="fixed inset-0 bg-term-frame/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden gpu-layer">
+        <div class="border-2 border-term-frame bg-term-bg max-w-2xl w-full p-4 terminal-box-shadow space-y-4 max-h-[90vh] flex flex-col">
+            <div class="border-b-2 border-term-frame pb-2 flex items-center justify-between shrink-0">
+                <span class="font-bold text-xs uppercase tracking-wider text-amber-900 flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    > TIME_CAPSULE // 這天你在想什麼 (含年份歷程)
+                </span>
+                <button onclick="closeTimeMachineModal()" class="text-xs border border-term-frame hover:bg-term-frame hover:text-term-bg px-1.5 py-0.5 font-bold">
+                    [X]
+                </button>
+            </div>
+
+            <div id="timeMachineContent" class="flex-1 overflow-y-auto space-y-3 pr-1 text-xs">
+                <!-- Dynamically populated via JS -->
+            </div>
+
+            <div class="pt-2 flex justify-end shrink-0 border-t border-term-border">
+                <button onclick="closeTimeMachineModal()" class="btn-terminal text-xs">
+                    <span>> CLOSE_CAPSULE</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expanded Data Management & File System Modal -->
+    <div id="fileOpsModal" class="fixed inset-0 bg-term-frame/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden gpu-layer">
+        <div class="border-2 border-term-frame bg-term-bg max-w-xl w-full p-4 terminal-box-shadow space-y-4 max-h-[90vh] flex flex-col">
+            <div class="border-b-2 border-term-frame pb-2 flex items-center justify-between shrink-0">
+                <span class="font-bold text-xs uppercase tracking-wider text-term-frame flex items-center gap-2">
+                    <i class="fa-solid fa-database"></i>
+                    > DATA_MANAGEMENT_&_FILE_STORAGE // v1.5
+                </span>
+                <button onclick="closeFileOpsModal()" class="text-xs border border-term-frame hover:bg-term-frame hover:text-term-bg px-1.5 py-0.5 font-bold">
+                    [X]
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto space-y-4 pr-1 text-xs text-term-text">
+                <!-- Storage Diagnostics -->
+                <div class="p-3 border border-term-frame bg-term-bg/50 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-[11px] uppercase text-term-frame">// STORAGE_DIAGNOSTICS</span>
+                        <span id="currentHandleLabel" class="text-[10px] text-term-muted font-mono">[NONE - Local Storage]</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-[11px] font-mono">
+                        <div>儲存空間使用率: <span id="storageUsageText" class="font-bold text-term-accent">0 KB</span></div>
+                        <div>當前 API 狀態: <span id="fileApiStatusModalText" class="font-bold text-term-frame">DETECTED</span></div>
+                    </div>
+                    <p id="handleDescriptionText" class="text-[10px] text-term-muted font-mono">提示：預設儲存於 LocalStorage，亦可連結本機 JSON 檔案實時同步。</p>
+                </div>
+
+                <!-- Local File Handle Sync -->
+                <div class="space-y-1.5 border border-term-border p-2.5">
+                    <span class="font-bold text-[11px] uppercase block text-term-frame mb-1">// 1. LOCAL_FILE_HANDLE_SYNC</span>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
+                        <button onclick="openLocalFileWithApi()" class="btn-terminal text-[11px] justify-between">
+                            <span>> 開啟本機檔</span>
+                            <i class="fa-solid fa-folder-open text-xs"></i>
+                        </button>
+
+                        <button onclick="saveToLocalFileWithApi()" class="btn-terminal text-[11px] justify-between">
+                            <span>> 另存新檔</span>
+                            <i class="fa-solid fa-floppy-disk text-xs"></i>
+                        </button>
+
+                        <button onclick="syncToCurrentHandle()" id="syncFileBtn" class="btn-terminal text-[11px] justify-between opacity-50 cursor-not-allowed" disabled>
+                            <span>> 立即同步</span>
+                            <i class="fa-solid fa-rotate text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Multi-Format Export Engine -->
+                <div class="space-y-2 border border-term-border p-2.5">
+                    <span class="font-bold text-[11px] uppercase block text-term-frame">// 2. MULTI_FORMAT_EXPORT_ENGINE</span>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <!-- Export JSON Sub-group -->
+                        <div class="space-y-1">
+                            <span class="text-[10px] text-term-muted block">// JSON 備份</span>
+                            <div class="flex gap-1">
+                                <button onclick="exportData('all')" class="btn-terminal flex-1 text-[10px] justify-center">
+                                    <i class="fa-solid fa-file-code"></i> 全庫 JSON
+                                </button>
+                                <button onclick="exportData('current')" class="btn-terminal flex-1 text-[10px] justify-center">
+                                    <i class="fa-solid fa-file-code"></i> 單篇 JSON
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Export Markdown Sub-group -->
+                        <div class="space-y-1">
+                            <span class="text-[10px] text-term-muted block">// Markdown 文檔</span>
+                            <div class="flex gap-1">
+                                <button onclick="exportAsMarkdown('all')" class="btn-terminal flex-1 text-[10px] justify-center">
+                                    <i class="fa-brands fa-markdown"></i> 全庫 .MD
+                                </button>
+                                <button onclick="exportAsMarkdown('current')" class="btn-terminal flex-1 text-[10px] justify-center">
+                                    <i class="fa-brands fa-markdown"></i> 單篇 .MD
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Export CSV Sub-group -->
+                    <div class="pt-1">
+                        <button onclick="exportAsCsv('all')" class="btn-terminal w-full text-[11px] justify-center">
+                            <i class="fa-solid fa-file-csv"></i> 匯出全庫為 Excel 表格檔 (.CSV)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Data Import Strategy -->
+                <div class="space-y-2 border border-term-border p-2.5">
+                    <span class="font-bold text-[11px] uppercase block text-term-frame">// 3. DATA_IMPORT_&_MERGE_STRATEGY</span>
+                    
+                    <div class="flex items-center gap-4 text-[11px] font-mono py-1">
+                        <span class="text-term-muted font-bold">匯入策略:</span>
+                        <label class="inline-flex items-center gap-1 cursor-pointer">
+                            <input type="radio" name="importStrategy" value="merge" checked class="accent-term-frame" />
+                            <span>合併 (Merge - 保留現有資料)</span>
+                        </label>
+                        <label class="inline-flex items-center gap-1 cursor-pointer">
+                            <input type="radio" name="importStrategy" value="overwrite" class="accent-term-frame" />
+                            <span class="text-rose-800 font-bold">覆蓋 (Overwrite)</span>
+                        </label>
+                    </div>
+
+                    <button onclick="triggerImportWithValidation()" class="btn-terminal w-full justify-between">
+                        <span>> 選擇 JSON 檔案匯入 (含自動 Schema 驗證與修復)</span>
+                        <i class="fa-solid fa-file-import text-xs"></i>
+                    </button>
+                </div>
+
+                <!-- Danger Zone -->
+                <div class="p-2.5 border border-rose-800 bg-rose-50/40 space-y-2">
+                    <span class="font-bold text-[11px] uppercase text-rose-800 block">// DANGER_ZONE</span>
+                    <div class="flex items-center justify-between">
+                        <p class="text-[10px] text-rose-900 leading-tight">清空所有本機日記。系統將自動在刪除前觸發緊急全庫 JSON 備份下載。</p>
+                        <button onclick="clearAllDataWithBackup()" class="btn-terminal text-[10px] text-rose-800 border-rose-800 hover:bg-rose-900 hover:text-term-bg shrink-0 font-bold">
+                            > 備份並重置全庫
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="pt-2 flex justify-end shrink-0 border-t border-term-border">
+                <button onclick="closeFileOpsModal()" class="btn-terminal text-xs">
+                    <span>> CLOSE</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Configuration Modal -->
+    <div id="aiConfigModal" class="fixed inset-0 bg-term-frame/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden gpu-layer">
+        <div class="border-2 border-term-frame bg-term-bg max-w-md w-full p-4 terminal-box-shadow space-y-4">
+            <div class="border-b-2 border-term-frame pb-2 flex items-center justify-between">
+                <span class="font-bold text-xs uppercase tracking-wider text-term-frame">
+                    > ai_service_configuration // 安全與隱私公告
+                </span>
+                <button onclick="closeAiConfigModal()" class="text-xs border border-term-frame hover:bg-term-frame hover:text-term-bg px-1.5 py-0.5 font-bold">
+                    [X]
+                </button>
+            </div>
+
+            <div class="border border-amber-800 bg-amber-50 p-2 text-[11px] text-amber-900 space-y-1 font-mono">
+                <p class="font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> 安全與隱私提醒：</p>
+                <p>1. <strong>API 金鑰安全</strong>：金鑰會以明文儲存於瀏覽器 localStorage 中，請勿在公共裝置使用。</p>
+                <p>2. <strong>資料傳輸隱私</strong>：當您使用 AI 功能時，日記內容與標籤會傳送至 Google Gemini 雲端 API 進行分析。</p>
+            </div>
+
+            <form onsubmit="saveAiConfig(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-bold text-term-text mb-1">// GEMINI_API_KEY</label>
+                    <input type="password" id="aiApiKeyInput" placeholder="請輸入 Gemini API Key" class="input-terminal w-full text-xs" />
+                </div>
+
+                <div>
+                    <label class="block font-bold text-term-text mb-1">// MODEL_NAME</label>
+                    <select id="aiModelSelect" class="input-terminal w-full text-xs bg-term-bg">
+                        <option value="gemini-3-flash-preview">gemini-3-flash-preview (Recommended)</option>
+                        <option value="gemini-3.1-flash-live-preview">gemini-3.1-flash-live-preview</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-term-text mb-1">// AI_PERSONA_PROMPT</label>
+                    <textarea id="aiSystemPromptInput" rows="2" class="input-terminal w-full text-xs resize-none" placeholder="Default: You are a retro terminal reflective coach."></textarea>
+                </div>
+
+                <div class="pt-2 flex items-center justify-between">
+                    <button type="button" onclick="testAiConnection()" class="btn-terminal text-xs">
+                        <i class="fa-solid fa-vial text-xs"></i>
+                        <span>> test_connection</span>
+                    </button>
+                    <button type="submit" class="btn-terminal font-bold text-xs">
+                        <span>> SAVE_CONFIG</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- AI Summary Modal -->
+    <div id="aiSummaryModal" class="fixed inset-0 bg-term-frame/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden gpu-layer">
+        <div class="border-2 border-term-frame bg-term-bg max-w-xl w-full p-4 terminal-box-shadow space-y-4 max-h-[90vh] flex flex-col">
+            <div class="border-b-2 border-term-frame pb-2 flex items-center justify-between shrink-0">
+                <span class="font-bold text-xs uppercase tracking-wider text-term-frame flex items-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles text-emerald-800"></i>
+                    > AI_PERIODIC_INSIGHTS_REPORT
+                </span>
+                <button onclick="closeAiSummaryModal()" class="text-xs border border-term-frame hover:bg-term-frame hover:text-term-bg px-1.5 py-0.5 font-bold">
+                    [X]
+                </button>
+            </div>
+
+            <div id="aiSummaryContent" class="flex-1 overflow-y-auto border border-term-frame p-3 bg-term-bg/50 font-mono text-xs space-y-2 leading-relaxed">
+                <div class="text-center py-8 text-term-muted">
+                    <i class="fa-solid fa-spinner animate-spin text-lg mb-2 block"></i>
+                    <span>Analyzing journal log stream with Gemini AI...</span>
+                </div>
+            </div>
+
+            <div class="pt-2 flex items-center justify-between shrink-0 border-t border-term-border">
+                <button onclick="copyAiSummaryText()" class="btn-terminal text-xs">
+                    <i class="fa-solid fa-copy text-xs"></i>
+                    <span>> copy_summary</span>
+                </button>
+                <button onclick="closeAiSummaryModal()" class="btn-terminal text-xs">
+                    <span>> CLOSE</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats & Pattern Modal -->
+    <div id="statsModal" class="fixed inset-0 bg-term-frame/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden gpu-layer">
+        <div class="border-2 border-term-frame bg-term-bg max-w-lg w-full p-4 terminal-box-shadow space-y-4 max-h-[90vh] flex flex-col">
+            <div class="border-b-2 border-term-frame pb-2 flex items-center justify-between shrink-0">
+                <span class="font-bold text-xs uppercase tracking-wider text-term-frame flex items-center gap-2">
+                    <i class="fa-solid fa-chart-line"></i>
+                    > SYSTEM_PATTERNS_&_PERIODIC_REPORT
+                </span>
+                <button onclick="closeStatsModal()" class="text-xs text-term-frame hover:bg-term-frame hover:text-term-bg px-1.5 py-0.5 border border-term-frame font-bold">
+                    [X]
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto space-y-4 pr-1">
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="border border-term-frame p-3 bg-term-bg">
+                        <span class="text-[10px] text-term-muted uppercase font-bold">// total_entries</span>
+                        <h4 id="statTotalMessages" class="text-2xl font-bold font-mono mt-1 text-term-frame">0</h4>
+                    </div>
+                    <div class="border border-term-frame p-3 bg-term-bg">
+                        <span class="text-[10px] text-term-muted uppercase font-bold">// total_threads</span>
+                        <h4 id="statTotalThreads" class="text-2xl font-bold font-mono mt-1 text-term-frame">0</h4>
+                    </div>
+                </div>
+
+                <div class="border-2 border-term-frame p-3 bg-amber-50/50 space-y-2">
+                    <span class="text-[10px] font-bold uppercase text-amber-900 flex items-center gap-1">
+                        <i class="fa-solid fa-eye"></i> // PATTERN_DETECTION
+                    </span>
+                    <div id="patternInsightBox" class="text-xs text-term-text leading-relaxed font-mono">
+                        正在分析近期數據模式...
+                    </div>
+                </div>
+
+                <div>
+                    <span class="text-[10px] text-term-muted uppercase font-bold block mb-2">// synchronized_topic_tags</span>
+                    <div id="topicBreakdownList" class="border border-term-frame p-3 bg-term-bg flex flex-wrap gap-1.5 items-center">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-2 flex items-center justify-between shrink-0 border-t border-term-border">
+                <button onclick="generatePeriodicAiReport('weekly')" class="btn-terminal text-emerald-900 border-emerald-900 text-xs">
+                    <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
+                    <span>> 生成 AI 週報/月報敘事</span>
+                </button>
+                <button onclick="closeStatsModal()" class="btn-terminal text-xs">
+                    <span>> CLOSE_REPORT</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="fixed inset-0 bg-term-frame/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden gpu-layer">
+        <div class="border-2 border-term-frame bg-term-bg max-w-sm w-full p-4 terminal-box-shadow space-y-4">
+            <div class="border-b-2 border-rose-800 pb-2 flex items-center justify-between text-rose-800">
+                <span class="font-bold text-xs uppercase tracking-wider">
+                    [WARN] DELETE_CONFIRMATION
+                </span>
+                <span class="text-xs font-bold">[!]</span>
+            </div>
+            <div class="text-xs text-term-text space-y-2">
+                <p class="font-bold">> Are you sure you want to delete this thread?</p>
+                <p class="text-term-muted text-[11px]">// Action is reversible via Undo Toast within seconds.</p>
+            </div>
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-term-border">
+                <button onclick="closeDeleteModal()" class="btn-terminal text-xs">
+                    <span>> ABORT</span>
+                </button>
+                <button onclick="executeDeleteThread()" class="btn-terminal text-xs text-rose-800 border-rose-800 hover:bg-rose-900 hover:text-term-bg font-bold">
+                    <span>> CONFIRM_DELETE</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Popup -->
+    <div id="toast" class="fixed bottom-10 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-200 pointer-events-auto gpu-layer">
+        <div class="border-2 border-term-frame bg-term-bg px-4 py-2 text-xs font-bold text-term-frame terminal-box-shadow-sm flex items-center space-x-3">
+            <span id="toastIcon" class="text-emerald-700">></span>
+            <span id="toastMessage">SYS_EVENT_OK</span>
+            <button id="toastUndoBtn" onclick="executeUndo()" class="hidden text-amber-900 underline ml-2 hover:text-term-text">[UNDO]</button>
+        </div>
+    </div>
+
+
+    <!-- Modular JavaScript (order matters - shared global scope) -->
+    <script src="js/utils.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/threads.js"></script>
+    <script src="js/ai.js"></script>
+    <script src="js/fileops.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
