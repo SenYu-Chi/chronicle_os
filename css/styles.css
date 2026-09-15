@@ -1,0 +1,180 @@
+/**
+ * Chronicle OS v1.5 - Custom Terminal Styles
+ * Extracted from original single-file build. Do not remove gpu-layer / terminal-box-shadow rules.
+ */
+
+:root {
+    --color-bg: #EDEAE3;
+    --color-frame: #1F2430;
+    --color-text: #2B2B2B;
+    --color-muted: #8A8A85;
+    --color-border: #3D3D3A;
+    --color-accent: #2C5E3B;
+    --color-warn: #B91C1C;
+}
+
+body {
+    font-family: 'JetBrains Mono', Consolas, 'Courier New', monospace;
+    background-color: #c4c0b8;
+}
+
+.terminal-box-shadow {
+    box-shadow: 4px 4px 0px #1F2430;
+}
+
+.gpu-layer {
+    will-change: transform;
+    transform: translateZ(0);
+}
+
+.btn-terminal {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    font-family: inherit;
+    font-weight: 500;
+    color: #1F2430;
+    background: transparent;
+    border: 1.5px solid #1F2430;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.btn-terminal:hover {
+    background: #1F2430;
+    color: #EDEAE3;
+}
+
+.btn-terminal-active {
+    background: #1F2430;
+    color: #EDEAE3;
+}
+
+/* Thread item */
+.thread-item {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background 0.1s, border-color 0.1s;
+}
+
+.thread-item:hover {
+    background: rgba(31, 36, 48, 0.06);
+}
+
+.thread-item.active {
+    background: rgba(31, 36, 48, 0.1);
+    border-color: #1F2430;
+}
+
+.thread-item .title {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #1F2430;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.thread-item .meta {
+    font-size: 0.6875rem;
+    color: #8A8A85;
+    margin-top: 0.125rem;
+}
+
+/* Entry card */
+.entry-card {
+    border: 1.5px solid #3D3D3A;
+    padding: 0.75rem 1rem;
+    background: rgba(255,255,255,0.35);
+}
+
+.entry-card .entry-time {
+    font-size: 0.6875rem;
+    color: #8A8A85;
+}
+
+.entry-card .entry-body {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin-top: 0.25rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* Tag pills */
+.tag-pill {
+    display: inline-block;
+    padding: 0.125rem 0.5rem;
+    font-size: 0.625rem;
+    border: 1px solid #3D3D3A;
+    color: #2B2B2B;
+    cursor: pointer;
+    user-select: none;
+}
+
+.tag-pill.active {
+    background: #1F2430;
+    color: #EDEAE3;
+    border-color: #1F2430;
+}
+
+/* Modal base */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(31, 36, 48, 0.5);
+    backdrop-filter: blur(2px);
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.modal-box {
+    background: #EDEAE3;
+    border: 2px solid #1F2430;
+    box-shadow: 4px 4px 0 #1F2430;
+    max-width: 28rem;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+/* Scrollbar subtle */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #3D3D3A;
+    border-radius: 3px;
+}
+
+/* AI chat message bubbles */
+.ai-msg {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #3D3D3A;
+    font-size: 0.75rem;
+    line-height: 1.45;
+}
+.ai-msg.user {
+    background: rgba(44, 94, 59, 0.12);
+    border-color: #2C5E3B;
+}
+.ai-msg.assistant {
+    background: rgba(31, 36, 48, 0.06);
+}
+
+/* Utility */
+.truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
